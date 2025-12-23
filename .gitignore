@@ -3,3 +3,9 @@
 
 # Firebase service account
 serviceAccountKey.json
+
+# RFT Buy Request History
+rft-req-history.json
+
+# gitignore
+.gitignore
