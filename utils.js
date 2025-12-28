@@ -122,3 +122,6 @@ export function newPlayerTemplate(name) {
   };
 }
 
+export function parseGems(pack) {
+	return parseInt(pack.split("_")[1]);
+}

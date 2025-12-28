@@ -9,3 +9,5 @@ rft-req-history.json
 
 # gitignore
 .gitignore
+
+node_modules

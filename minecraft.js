@@ -1,15 +1,9 @@
 const express = require("express");
 const cors = require("cors");
-const admin = require("firebase-admin");
+const admin = require("./firebase")
 const rateLimit = require("express-rate-limit");
 const utils = require("./utils.js");
 require("dotenv").config({ path: "./minecraft.env" });
-
-const serviceAccount = require("./serviceAccountKey.json"); // path to your downloaded key
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
 
 const db = admin.firestore();
 const app = express();
@@ -86,10 +80,11 @@ app.post("/players/logout", async (req, res) => {
 /* -------- Gems -------- */
 
 const packages = {
-	"gems_170": 170,
 	"gems_380": 380,
-	"gems_730": 730,
-	"gems_1650": 1650
+	"gems_750": 730,
+	"gems_1730": 1650,
+	"gems_4720": 4560,
+	"gems_8970": 8700
 };
 
 app.post("/shop/buygems", async (req, res) => {
@@ -119,6 +114,4 @@ app.post("/shop/buygems", async (req, res) => {
 });
 /* ------------------------ */
 
-app.listen(process.env.PORT, () => {
-	console.log(`Server running on PORT ${process.env.PORT}`);
-});
+module.exports = app;

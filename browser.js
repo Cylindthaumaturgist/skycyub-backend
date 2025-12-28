@@ -1,17 +1,11 @@
 const express = require("express");
 const cors = require("cors");
-const admin = require("firebase-admin");
+const admin = require("./firebase")
 const rateLimit = require("express-rate-limit");
 const fs = require("fs/promises");
 
 //const utils = require("./utils.js");
 require("dotenv").config({ path: "./browser.env" });
-
-const serviceAccount = require("./serviceAccountKey.json"); // path to your downloaded key
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
 
 const db = admin.firestore();
 const app = express();
@@ -32,7 +26,7 @@ const files = [
 	"rft-req-history.json"
 ];
 
-const RFTRequestsHistory = getFileContent(files[0]) || [];
+//const RFTRequestsHistory = getFileContent(files[0]) || [];
 
 const PENDING_EXPIRE = 5 * 60 * 1000 // 5 minutes
 
@@ -51,14 +45,15 @@ const onPendingRFTRequests = [];
 setInterval(() => cleanupRequests(onPendingRFTRequests), 60 * 1000)
 
 const packagesToRFT = {
-	"gems_170": 220,
-	"gems_380": 390,
-	"gems_730": 800,
-	"gems_1650": 1500
+	"gems_380": 150,
+	"gems_750": 350,
+	"gems_1730": 900,
+	"gems_4720": 2400,
+	"gems_8970": 4400
 };
 
 app.post("/shop/buygems", async (req, res) => {
-	const { name, uuid, package, paymentMethod, payment, timestamp } = req.body;
+	const { name, uuid, package, paymentMethod, payment, timestamp, amount } = req.body;
 	
 	console.log(`[Bearer][POST] Request to /shop/buygems (name: ${name}, uuid: ${uuid}) KEY: ${req.headers?.key === process.env.SHOP_BUY_GEMS ? "process.env.SHOP_BUY_GEMS" : req.headers?.key }`);
 	
@@ -71,7 +66,8 @@ app.post("/shop/buygems", async (req, res) => {
 				name,
 				uuid,
 				timestamp,
-				package
+				package,
+				amount
 			});
 			console.log(onPendingRFTRequests)
 		}
@@ -92,9 +88,9 @@ app.post("/shop/rftpaymentconfirmationgems", async (req, res) => {
 		console.log(foundSender)
 		if (foundSender) {
 			const { name, uuid, package } = foundSender;
-			console.log(amount - fee)
-			if ((amount - fee) >= packagesToRFT[package]) {
-			  const request = await fetch("http://192.168.1.2:3000/shop/buygems", {
+			console.log(amount - fee, packagesToRFT[package] * foundSender.amount)
+			if ((amount - fee) >= (packagesToRFT[package] * foundSender.amount)) {
+			  const request = await fetch("http://192.168.1.2:3000/1/shop/buygems", {
 					method: "POST",
 					headers: {
 						"Content-Type": "application/json",
@@ -109,10 +105,10 @@ app.post("/shop/rftpaymentconfirmationgems", async (req, res) => {
 				if (index !== -1) {
 					onPendingRFTRequests.splice(index, 1);
 				}
-				RFTRequestsHistory.push({
+				/*RFTRequestsHistory.push({
 					...foundSender
 				});
-				await writeFileContent(files[0], RFTRequestsHistory);
+				await writeFileContent(files[0], RFTRequestsHistory);*/
 				console.log(`[Bearer][POST] Response from backend/shop/buygems: \n${JSON.stringify(resolve, null, 2)}`);
 				res.send(resolve);
 			}
@@ -124,6 +120,4 @@ app.post("/shop/rftpaymentconfirmationgems", async (req, res) => {
 });
 /* ---------------------- */
 
-app.listen(process.env.PORT, () => {
-	console.log(`Bearer running on PORT ${process.env.PORT}`);
-});
+module.exports = app;
